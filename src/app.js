@@ -9,4 +9,3 @@ app.use(express.json())
 
 
 module.exports =  app
- console.log("hi")
