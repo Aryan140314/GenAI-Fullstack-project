@@ -36,6 +36,8 @@ async function registerUserController(req,res) {
         password: hash
      })
 
+     await user.save()
+
      const token = jwt.sign(
         { id: user._id, username: user.username },
         process.env.JWT_SECRET,
@@ -64,39 +66,44 @@ async function registerUserController(req,res) {
  async function loginUserController(req, res) {
 
     const { email, password } = req.body
+
+    if(!email || !password) {
+        return res.status(400).json({
+            message: "Please provide email and password"
+        })
+    }
+
     const user = await userModel.findOne({ email })
 
-    if (!user){
+    if (!user) {
         return res.status(400).json({
             message: "Invalid email or password"
         })
-
-        const isPasswordValid = await bcrypt.compare(password, user.password)
-
-        if(!isPasswordValid){
-            return res.status(400).json({
-                message: " Invalid email or password "
-            })
-        }
-
-        const token = jwt.sign(
-            { id: user._id, username: user.username },
-            process.env.JWT_SECRET,
-            { expiresIn: "1d"}
-        )
-
-        res.cookie("token", token)
-        res.status(200).json({
-            message: "User login successfully.",
-            user:{
-                id: user._id,
-                username: user.username,
-                email: user.email
-            }
-        })
-
     }
-    
+
+    const isPasswordValid = await bcrypt.compare(password, user.password)
+
+    if(!isPasswordValid){
+        return res.status(400).json({
+            message: "Invalid email or password"
+        })
+    }
+
+    const token = jwt.sign(
+        { id: user._id, username: user.username },
+        process.env.JWT_SECRET,
+        { expiresIn: "1d"}
+    )
+
+    res.cookie("token", token)
+    res.status(200).json({
+        message: "User login successfully.",
+        user:{
+            id: user._id,
+            username: user.username,
+            email: user.email
+        }
+    })
  }
 
 module.exports = {
